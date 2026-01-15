@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+includes:
+  api:
+    taskfile: ./api/Taskfile.yml
+    dir: ./api
+
+tasks:
+  default:
+    desc: Display available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # Install
+  install:
+    desc: Install all dependencies
+    deps:
+      - desktop:install
+      - api:install
+
+  # Build
+  build:
+    desc: Build all components
+    deps:
+      - desktop:build
+
+  # Code Quality
+  lint:
+    desc: Lint all components
+    deps:
+      - desktop:lint
+      - api:lint
+
+  format:
+    desc: Format all components
+    deps:
+      - desktop:format
+      - api:format
+
+  # Testing
+  test:
+    desc: Run all tests
+    deps:
+      - api:test
+
+  # Desktop Tasks
+  desktop:install:
+    desc: Install desktop dependencies
+    dir: ./desktop
+    cmds:
+      - pnpm install
+
+  desktop:dev:
+    desc: Run desktop development server
+    dir: ./desktop
+    cmds:
+      - pnpm tauri dev
+
+  desktop:build:
+    desc: Build desktop app
+    dir: ./desktop
+    cmds:
+      - pnpm tauri build
+
+  desktop:lint:
+    desc: Lint desktop code
+    dir: ./desktop
+    cmds:
+      - pnpm eslint .
+
+  desktop:format:
+    desc: Format desktop code
+    dir: ./desktop
+    cmds:
+      - pnpm prettier --write .
+
+  # API Tasks
+  api:install:
+    desc: Install API dependencies
+    dir: ./api
+    cmds:
+      - uv sync
+
+  api:dev:
+    desc: Run API development server
+    dir: ./api
+    cmds:
+      - uv run fastapi dev
