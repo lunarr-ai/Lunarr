@@ -1,5 +1,12 @@
 import eslint from "@eslint/js";
-import prettier from "eslint-config-prettier/flat";
+import vitestPlugin from "@vitest/eslint-plugin";
+import prettierConfig from "eslint-config-prettier/flat";
+import importPlugin from "eslint-plugin-import";
+import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
+import promisePlugin from "eslint-plugin-promise";
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
+import reactRefreshPlugin from "eslint-plugin-react-refresh";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -9,6 +16,8 @@ export default defineConfig([
     "**/.cache/**",
     "**/.env.*",
     "**/.env",
+    "**/.react-router/**",
+    "**/.vite/**",
     "**/*.config.{js,mjs,cjs,ts}",
     "**/build/**",
     "**/coverage/**",
@@ -17,8 +26,15 @@ export default defineConfig([
     "**/public/**",
   ]),
   eslint.configs.recommended,
+  promisePlugin.configs["flat/recommended"],
+  reactPlugin.configs.flat.recommended,
+  reactPlugin.configs.flat["jsx-runtime"],
+  reactHooksPlugin.configs.flat.recommended,
+  jsxA11yPlugin.flatConfigs.recommended,
+  reactRefreshPlugin.configs.recommended,
+  reactRefreshPlugin.configs.vite,
   tseslint.configs.recommendedTypeChecked,
-  prettier,
+  vitestPlugin.configs.recommended,
   {
     settings: {
       react: {
@@ -41,6 +57,15 @@ export default defineConfig([
   },
   {
     files: ["**/*.{ts,tsx}"],
+    extends: [importPlugin.flatConfigs.recommended, importPlugin.flatConfigs.typescript],
+    settings: {
+      "import/resolver": {
+        typescript: {
+          alwaysTryTypes: true,
+          project: "{apps,packages}/*/tsconfig.json",
+        },
+      },
+    },
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unused-vars": [
@@ -56,6 +81,11 @@ export default defineConfig([
         },
       ],
       "no-empty-pattern": "warn",
+      "jsx-a11y/no-autofocus": "off",
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowExportNames: ["meta", "links", "headers", "loader", "action", "clientLoader", "clientAction"] },
+      ],
     },
   },
   {
@@ -73,4 +103,5 @@ export default defineConfig([
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  prettierConfig,
 ]);
