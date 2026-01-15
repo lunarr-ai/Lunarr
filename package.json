@@ -20,6 +20,13 @@
     ],
     "*.{js,jsx,ts,tsx,cjs,mjs,cts,mts}": [
       "pnpm exec eslint --fix --max-warnings=0 --no-warn-ignored"
+    ],
+    "api/**/*.py": [
+      "task -d api format --",
+      "task -d api lint --"
+    ],
+    "api/pyproject.toml": [
+      "bash -c 'task -d api lock'"
     ]
   },
   "engines": {

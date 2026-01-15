@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+tasks:
+  default:
+    desc: Display available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # Development
+  format:
+    desc: Format code
+    cmds:
+      - uv run ruff format {{.CLI_ARGS | default "."}}
+
+  lint:
+    desc: Run linting
+    cmds:
+      - uv run ruff check --fix {{.CLI_ARGS | default "."}}
+
+  lock:
+    desc: Update uv.lock
+    cmds:
+      - uv lock
+
+  # Testing
+  test:
+    desc: Run tests
+    cmds:
+      - uv run pytest {{.CLI_ARGS | default "tests"}}
