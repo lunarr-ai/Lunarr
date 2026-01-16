@@ -45,5 +45,6 @@ bin/
 # Taskfile cache
 .task/
 
-# Implementation plan (local only)
+# Local documents
+spec/
 PLAN.md
