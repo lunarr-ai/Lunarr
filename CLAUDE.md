@@ -8,8 +8,10 @@ Lunarr is a monorepo:
 
 ```
 lunarr/
-├── desktop/ # Tauri desktop app
-└── api/     # FastAPI backend
+├── spec/           # Specifications
+├── desktop/        # Lunarr desktop app
+├── agent-broker/   # A2A-compliant agent registry and routing system
+└── api/            # Lunarr-managed agent backend
 ```
 
 ## Commands
