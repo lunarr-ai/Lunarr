@@ -22,6 +22,10 @@ type Config struct {
 	// Embedding config
 	EmbeddingURL string
 	EmbeddingDim int
+
+	// Gemini config
+	GeminiAPIKey string
+	GeminiModel  string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -33,8 +37,10 @@ func Load() *Config {
 		QdrantPort:   getEnvInt("QDRANT_PORT", 6334),
 		QdrantAPIKey: getEnv("QDRANT_API_KEY", ""),
 		QdrantUseTLS: getEnvBool("QDRANT_USE_TLS", false),
-		EmbeddingURL: getEnv("EMBEDDING_URL", "http://localhost:8080"),
+		EmbeddingURL: getEnv("EMBEDDING_URL", "http://localhost:8081"),
 		EmbeddingDim: getEnvInt("EMBEDDING_DIM", 384),
+		GeminiAPIKey: getEnv("GEMINI_API_KEY", ""),
+		GeminiModel:  getEnv("GEMINI_MODEL", "gemini-3-flash-preview"),
 	}
 }
 

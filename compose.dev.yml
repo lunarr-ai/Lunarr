@@ -1,19 +1,19 @@
 services:
-  qdrant:
+  registry:
     image: qdrant/qdrant:v1.16
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - qdrant-data:/data
+      - registry-data:/data
 
-  tei:
+  embedding:
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
     platform: ${TEI_PLATFORM:-linux/amd64}
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
-      - tei-data:/data
+      - embedding-data:/data
     environment:
       - MODEL_ID=${TEI_EMBEDDING_MODEL_ID}
     deploy:
@@ -23,5 +23,5 @@ services:
           cpus: '1'
 
 volumes:
-  qdrant-data:
-  tei-data:
+  registry-data:
+  embedding-data:

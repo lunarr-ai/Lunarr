@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
+
+	"github.com/lunarr-ai/lunarr/agent-broker/internal/agent"
 	"github.com/lunarr-ai/lunarr/agent-broker/internal/config"
 	"github.com/lunarr-ai/lunarr/agent-broker/internal/handler"
 	"github.com/lunarr-ai/lunarr/agent-broker/internal/registry"
@@ -22,6 +24,8 @@ func main() {
 }
 
 func run() error {
+	_ = godotenv.Load()
+
 	cfg := config.Load()
 	logger := setupLogger(cfg.LogLevel)
 
@@ -60,11 +64,20 @@ func run() error {
 
 	registryService := registry.NewRegistryService(qdrantStore, registry.WithEmbedder(embedder))
 
-	brokerURL := fmt.Sprintf("http://localhost:%d", cfg.Port)
+	brokerAgent, err := agent.NewBrokerAgent(ctx, registryService,
+		agent.WithGeminiAPIKey(cfg.GeminiAPIKey),
+		agent.WithGeminiModel(cfg.GeminiModel),
+	)
+	if err != nil {
+		logger.Error("failed to create broker agent", "error", err)
+		return err
+	}
+
+	sessionService := agent.NewSessionService()
 
 	mux := http.NewServeMux()
 
-	handler.NewBrokerHandler(registryService, brokerURL).RegisterRoutes(mux)
+	handler.NewBrokerHandler(brokerAgent, sessionService).RegisterRoutes(mux)
 	handler.NewHealthHandler(qdrantStore).RegisterRoutes(mux)
 	handler.NewAdminHandler(registryService).RegisterRoutes(mux)
 	handler.NewAgentsHandler(registryService).RegisterRoutes(mux)
