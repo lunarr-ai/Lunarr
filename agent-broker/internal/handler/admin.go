@@ -68,6 +68,7 @@ type AgentRecordResponse struct {
 	RegisteredAt time.Time `json:"registered_at"`
 	// UpdatedAt is the last update timestamp.
 	UpdatedAt time.Time `json:"updated_at"`
+	// TODO: Add RegisteredBy field to track admin user who registered the agent.
 }
 
 // AgentListResponse is the JSON response for listing agents.

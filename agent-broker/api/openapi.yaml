@@ -125,12 +125,6 @@ paths:
           schema:
             type: string
           example: "security-audit,code-review"
-        - name: capabilities
-          in: query
-          description: Filter by capabilities (comma-separated, must have all)
-          schema:
-            type: string
-          example: "streaming"
         - name: q
           in: query
           description: Search query for name/description
@@ -287,18 +281,18 @@ components:
         checks:
           type: object
           properties:
-            vector_storage:
+            registry:
               type: string
               enum:
                 - up
                 - down
-              description: Vector storage connectivity
+              description: Registry connectivity
           required:
-            - vector_storage
+            - registry
       example:
         status: healthy
         checks:
-          vector_storage: up
+          registry: up
 
     AgentCard:
       type: object
