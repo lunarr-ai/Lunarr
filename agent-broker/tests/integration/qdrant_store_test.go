@@ -305,3 +305,136 @@ func TestQdrantStore_DeleteAgent(t *testing.T) {
 		}
 	})
 }
+
+func TestQdrantStore_SearchAgents(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty store returns zero results", func(t *testing.T) {
+		t.Parallel()
+		s := setupStore(t)
+		ctx := context.Background()
+
+		query := []float32{1.0, 0.0, 0.0, 0.0}
+		result, err := s.SearchAgents(ctx, query, 10, store.AgentFilter{})
+
+		if err != nil {
+			t.Fatalf("SearchAgents() error = %v", err)
+		}
+		if len(result.Agents) != 0 {
+			t.Errorf("SearchAgents() got %d agents, want 0", len(result.Agents))
+		}
+	})
+
+	t.Run("returns agents sorted by similarity score", func(t *testing.T) {
+		t.Parallel()
+		s := setupStore(t)
+		ctx := context.Background()
+
+		agent1 := validAgent("agent-high")
+		agent1.Embedding = []float32{1.0, 0.0, 0.0, 0.0}
+		agent2 := validAgent("agent-mid")
+		agent2.Embedding = []float32{0.7, 0.7, 0.0, 0.0}
+		agent3 := validAgent("agent-low")
+		agent3.Embedding = []float32{0.0, 1.0, 0.0, 0.0}
+		_ = s.CreateAgent(ctx, agent1)
+		_ = s.CreateAgent(ctx, agent2)
+		_ = s.CreateAgent(ctx, agent3)
+
+		query := []float32{1.0, 0.0, 0.0, 0.0}
+		result, err := s.SearchAgents(ctx, query, 10, store.AgentFilter{})
+
+		if err != nil {
+			t.Fatalf("SearchAgents() error = %v", err)
+		}
+		if len(result.Agents) != 3 {
+			t.Fatalf("SearchAgents() got %d agents, want 3", len(result.Agents))
+		}
+		if result.Agents[0].Agent.ID != "agent-high" {
+			t.Errorf("SearchAgents() first result ID = %v, want agent-high", result.Agents[0].Agent.ID)
+		}
+		if result.Agents[0].Score < result.Agents[1].Score {
+			t.Errorf("SearchAgents() results not sorted by score descending")
+		}
+		if result.Agents[1].Score < result.Agents[2].Score {
+			t.Errorf("SearchAgents() results not sorted by score descending")
+		}
+	})
+
+	t.Run("filter by tags with vector search", func(t *testing.T) {
+		t.Parallel()
+		s := setupStore(t)
+		ctx := context.Background()
+
+		agent1 := validAgent("agent-1")
+		agent1.Tags = []string{"prod"}
+		agent1.Embedding = []float32{1.0, 0.0, 0.0, 0.0}
+		agent2 := validAgent("agent-2")
+		agent2.Tags = []string{"dev"}
+		agent2.Embedding = []float32{1.0, 0.0, 0.0, 0.0}
+		_ = s.CreateAgent(ctx, agent1)
+		_ = s.CreateAgent(ctx, agent2)
+
+		query := []float32{1.0, 0.0, 0.0, 0.0}
+		result, err := s.SearchAgents(ctx, query, 10, store.AgentFilter{Tags: []string{"prod"}})
+
+		if err != nil {
+			t.Fatalf("SearchAgents() error = %v", err)
+		}
+		if len(result.Agents) != 1 {
+			t.Errorf("SearchAgents() got %d agents, want 1", len(result.Agents))
+		}
+		if result.Agents[0].Agent.ID != "agent-1" {
+			t.Errorf("SearchAgents() got ID = %v, want agent-1", result.Agents[0].Agent.ID)
+		}
+	})
+
+	t.Run("filter by skills with vector search", func(t *testing.T) {
+		t.Parallel()
+		s := setupStore(t)
+		ctx := context.Background()
+
+		agent1 := validAgent("agent-1")
+		agent1.Card.Skills = []a2a.AgentSkill{{ID: "translate", Name: "Translate"}}
+		agent1.Embedding = []float32{1.0, 0.0, 0.0, 0.0}
+		agent2 := validAgent("agent-2")
+		agent2.Card.Skills = []a2a.AgentSkill{{ID: "summarize", Name: "Summarize"}}
+		agent2.Embedding = []float32{1.0, 0.0, 0.0, 0.0}
+		_ = s.CreateAgent(ctx, agent1)
+		_ = s.CreateAgent(ctx, agent2)
+
+		query := []float32{1.0, 0.0, 0.0, 0.0}
+		result, err := s.SearchAgents(ctx, query, 10, store.AgentFilter{Skills: []string{"translate"}})
+
+		if err != nil {
+			t.Fatalf("SearchAgents() error = %v", err)
+		}
+		if len(result.Agents) != 1 {
+			t.Errorf("SearchAgents() got %d agents, want 1", len(result.Agents))
+		}
+		if result.Agents[0].Agent.ID != "agent-1" {
+			t.Errorf("SearchAgents() got ID = %v, want agent-1", result.Agents[0].Agent.ID)
+		}
+	})
+
+	t.Run("limit parameter respected", func(t *testing.T) {
+		t.Parallel()
+		s := setupStore(t)
+		ctx := context.Background()
+
+		for i := 0; i < 5; i++ {
+			agent := validAgent(fmt.Sprintf("agent-%d", i))
+			agent.Embedding = []float32{1.0, 0.0, 0.0, 0.0}
+			_ = s.CreateAgent(ctx, agent)
+		}
+
+		query := []float32{1.0, 0.0, 0.0, 0.0}
+		result, err := s.SearchAgents(ctx, query, 2, store.AgentFilter{})
+
+		if err != nil {
+			t.Fatalf("SearchAgents() error = %v", err)
+		}
+		if len(result.Agents) != 2 {
+			t.Errorf("SearchAgents() got %d agents, want 2", len(result.Agents))
+		}
+	})
+}

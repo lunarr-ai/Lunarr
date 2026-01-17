@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"math"
 	"sort"
 	"strings"
 	"sync"
@@ -109,6 +110,58 @@ func (s *MemoryStore) DeleteAgent(_ context.Context, id string) error {
 
 	delete(s.agents, id)
 	return nil
+}
+
+// SearchAgents finds agents by vector similarity with optional filtering.
+func (s *MemoryStore) SearchAgents(_ context.Context, query []float32, limit int, filter AgentFilter) (*SearchResult, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var scored []ScoredAgent
+	for _, agent := range s.agents {
+		if !matchesFilter(agent, filter) {
+			continue
+		}
+		if len(agent.Embedding) == 0 {
+			continue
+		}
+
+		score := cosineSimilarity(query, agent.Embedding)
+		scored = append(scored, ScoredAgent{
+			Agent: agent,
+			Score: score,
+		})
+	}
+
+	sort.Slice(scored, func(i, j int) bool {
+		return scored[i].Score > scored[j].Score
+	})
+
+	if limit > 0 && len(scored) > limit {
+		scored = scored[:limit]
+	}
+
+	return &SearchResult{Agents: scored}, nil
+}
+
+// cosineSimilarity calculates the cosine similarity between two vectors.
+func cosineSimilarity(a, b []float32) float32 {
+	if len(a) != len(b) || len(a) == 0 {
+		return 0
+	}
+
+	var dotProduct, normA, normB float64
+	for i := range a {
+		dotProduct += float64(a[i]) * float64(b[i])
+		normA += float64(a[i]) * float64(a[i])
+		normB += float64(b[i]) * float64(b[i])
+	}
+
+	if normA == 0 || normB == 0 {
+		return 0
+	}
+
+	return float32(dotProduct / (math.Sqrt(normA) * math.Sqrt(normB)))
 }
 
 func matchesFilter(agent *RegisteredAgent, filter AgentFilter) bool {

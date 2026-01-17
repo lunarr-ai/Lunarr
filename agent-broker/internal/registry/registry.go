@@ -188,6 +188,45 @@ func (s *RegistryService) Delete(ctx context.Context, id string) error {
 	return s.store.DeleteAgent(ctx, id)
 }
 
+// DiscoverInput contains input for agent discovery.
+type DiscoverInput struct {
+	// Query is the natural language search query.
+	Query string
+	// Limit is the maximum results to return.
+	Limit int
+	// Tags filters by any matching tag.
+	Tags []string
+	// Skills filters by any matching skill ID.
+	Skills []string
+}
+
+// Discover finds agents by semantic similarity.
+func (s *RegistryService) Discover(ctx context.Context, input DiscoverInput) (*store.SearchResult, error) {
+	if input.Limit <= 0 {
+		input.Limit = 10
+	}
+	if input.Limit > 50 {
+		input.Limit = 50
+	}
+
+	if s.embedder == nil {
+		return nil, fmt.Errorf("embedder not configured")
+	}
+
+	embeddings, err := s.embedder.Embed(ctx, []string{input.Query})
+	if err != nil {
+		return nil, fmt.Errorf("generate embedding: %w", err)
+	}
+	if len(embeddings) == 0 {
+		return nil, fmt.Errorf("no embedding returned")
+	}
+
+	return s.store.SearchAgents(ctx, embeddings[0], input.Limit, store.AgentFilter{
+		Tags:   input.Tags,
+		Skills: input.Skills,
+	})
+}
+
 // ValidateAgentCard validates required fields in an AgentCard.
 func ValidateAgentCard(card a2a.AgentCard) error {
 	var errs []string

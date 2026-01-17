@@ -126,10 +126,92 @@ func extractSkill(msg *a2a.Message) string {
 	return ""
 }
 
-// TODO: Implement skill handlers
+func (h *BrokerHandler) handleDiscover(ctx context.Context, params *a2a.MessageSendParams) (a2a.SendMessageResult, error) {
+	req, err := parseDiscoverRequest(params.Message)
+	if err != nil {
+		return nil, a2a.ErrInvalidParams
+	}
 
-func (h *BrokerHandler) handleDiscover(_ context.Context, _ *a2a.MessageSendParams) (a2a.SendMessageResult, error) {
-	return nil, a2a.ErrUnsupportedOperation
+	result, err := h.registry.Discover(ctx, registry.DiscoverInput{
+		Query:  req.query,
+		Limit:  req.limit,
+		Tags:   req.tags,
+		Skills: req.skills,
+	})
+	if err != nil {
+		return nil, a2a.ErrInternalError
+	}
+
+	agents := make([]map[string]any, 0, len(result.Agents))
+	for _, scored := range result.Agents {
+		agents = append(agents, map[string]any{
+			"card":  scored.Agent.Card,
+			"score": scored.Score,
+		})
+	}
+
+	return &a2a.Message{
+		Role: a2a.MessageRoleAgent,
+		Parts: []a2a.Part{
+			&a2a.DataPart{
+				Data: map[string]any{
+					"agents": agents,
+					"total":  len(agents),
+				},
+			},
+		},
+	}, nil
+}
+
+type discoverRequest struct {
+	query  string
+	limit  int
+	tags   []string
+	skills []string
+}
+
+func parseDiscoverRequest(msg *a2a.Message) (*discoverRequest, error) {
+	if msg == nil {
+		return nil, a2a.ErrInvalidParams
+	}
+
+	for _, part := range msg.Parts {
+		dp, ok := part.(*a2a.DataPart)
+		if !ok {
+			continue
+		}
+
+		query, _ := dp.Data["query"].(string)
+		if query == "" {
+			return nil, a2a.ErrInvalidParams
+		}
+
+		req := &discoverRequest{query: query}
+
+		if limit, ok := dp.Data["limit"].(float64); ok {
+			req.limit = int(limit)
+		}
+
+		if tags, ok := dp.Data["tags"].([]any); ok {
+			for _, t := range tags {
+				if s, ok := t.(string); ok {
+					req.tags = append(req.tags, s)
+				}
+			}
+		}
+
+		if skills, ok := dp.Data["skills"].([]any); ok {
+			for _, s := range skills {
+				if str, ok := s.(string); ok {
+					req.skills = append(req.skills, str)
+				}
+			}
+		}
+
+		return req, nil
+	}
+
+	return nil, a2a.ErrInvalidParams
 }
 
 func (h *BrokerHandler) handleRoute(_ context.Context, _ *a2a.MessageSendParams) (a2a.SendMessageResult, error) {

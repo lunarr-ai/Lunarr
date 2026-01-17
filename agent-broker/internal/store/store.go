@@ -23,6 +23,8 @@ type Store interface {
 	GetAgent(ctx context.Context, id string) (*RegisteredAgent, error)
 	// ListAgents returns agents matching the filter criteria.
 	ListAgents(ctx context.Context, filter AgentFilter) (*AgentListResult, error)
+	// SearchAgents finds agents by vector similarity with optional filtering.
+	SearchAgents(ctx context.Context, query []float32, limit int, filter AgentFilter) (*SearchResult, error)
 	// UpdateAgent updates an existing agent. Returns ErrNotFound if not exists.
 	UpdateAgent(ctx context.Context, agent *RegisteredAgent) error
 	// DeleteAgent removes an agent. Returns ErrNotFound if not exists.
@@ -54,4 +56,18 @@ type AgentListResult struct {
 	Agents []*RegisteredAgent
 	// Total is the total count before pagination.
 	Total int
+}
+
+// SearchResult contains vector search results with similarity scores.
+type SearchResult struct {
+	// Agents is the list of matching agents with scores.
+	Agents []ScoredAgent
+}
+
+// ScoredAgent is an agent with its similarity score.
+type ScoredAgent struct {
+	// Agent is the matched agent.
+	Agent *RegisteredAgent
+	// Score is the similarity score (0-1, higher is more similar).
+	Score float32
 }

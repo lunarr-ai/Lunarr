@@ -437,6 +437,47 @@ func (s *QdrantStore) DeleteAgent(ctx context.Context, id string) error {
 	return nil
 }
 
+// SearchAgents finds agents by vector similarity with optional filtering.
+func (s *QdrantStore) SearchAgents(ctx context.Context, query []float32, limit int, filter AgentFilter) (*SearchResult, error) {
+	qdrantFilter := buildFilter(filter)
+
+	resp, err := s.client.Query(ctx, &qdrant.QueryPoints{
+		CollectionName: s.collectionName,
+		Query:          qdrant.NewQueryDense(query),
+		Limit:          qdrant.PtrOf(uint64(limit)),
+		Filter:         qdrantFilter,
+		WithPayload:    qdrant.NewWithPayload(true),
+		WithVectors:    qdrant.NewWithVectors(true),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query: %w", err)
+	}
+
+	agents := make([]ScoredAgent, 0, len(resp))
+	for _, point := range resp {
+		id := point.Payload["id"].GetStringValue()
+		agent, err := payloadToAgent(id, point.Payload)
+		if err != nil {
+			return nil, fmt.Errorf("parse payload for %s: %w", id, err)
+		}
+
+		if point.Vectors != nil {
+			if vec := point.Vectors.GetVector(); vec != nil {
+				if dense := vec.GetDense(); dense != nil {
+					agent.Embedding = dense.GetData()
+				}
+			}
+		}
+
+		agents = append(agents, ScoredAgent{
+			Agent: agent,
+			Score: point.Score,
+		})
+	}
+
+	return &SearchResult{Agents: agents}, nil
+}
+
 // agentToPayload converts a RegisteredAgent to Qdrant payload.
 func agentToPayload(agent *RegisteredAgent) (map[string]*qdrant.Value, error) {
 	cardJSON, err := json.Marshal(agent.Card)
