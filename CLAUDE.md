@@ -11,7 +11,7 @@ lunarr/
 ├── spec/           # Specifications
 ├── desktop/        # Lunarr desktop app
 ├── agent-broker/   # A2A-compliant agent registry and routing system
-└── api/            # Lunarr-managed agent backend
+└── agent-runtime/  # Agent runtime backend
 ```
 
 ## Commands
@@ -24,7 +24,7 @@ task install
 
 # Development servers (run separately)
 task desktop:dev  # Tauri desktop app
-task api:dev      # FastAPI backend
+task agent-runtime:dev      # Agent runtime backend
 
 # Build
 task build        # Build all components
@@ -36,5 +36,5 @@ task format       # Format all
 
 # Testing
 task test         # Run all tests
-task api:test     # Run API tests only
+task agent-runtime:test     # Run agent runtime tests only
 ```

@@ -21,7 +21,7 @@ dev = [
 package = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["lunarr"]
+packages = ["app"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
