@@ -9,9 +9,9 @@ includes:
   agent-broker:
     taskfile: ./agent-broker/Taskfile.yml
     dir: ./agent-broker
-  api:
-    taskfile: ./api/Taskfile.yml
-    dir: ./api
+  agent-runtime:
+    taskfile: ./agent-runtime/Taskfile.yml
+    dir: ./agent-runtime
 
 tasks:
   default:

@@ -30,12 +30,12 @@
     "*.{js,jsx,ts,tsx,cjs,mjs,cts,mts}": [
       "pnpm exec eslint --fix --max-warnings=0 --no-warn-ignored"
     ],
-    "api/**/*.py": [
-      "task -d api format --",
-      "task -d api lint --"
+    "agent-runtime/**/*.py": [
+      "task -d agent-runtime format --",
+      "task -d agent-runtime lint --"
     ],
-    "api/pyproject.toml": [
-      "bash -c 'task -d api lock'"
+    "agent-runtime/pyproject.toml": [
+      "bash -c 'task -d agent-runtime lock'"
     ],
     "agent-broker/**/*.go": [
       "task -d agent-broker fmt --",
