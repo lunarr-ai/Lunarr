@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "api"
+name = "agent-runtime"
 version = "0.0.1"
-description = "API for Lunarr"
+description = "Runtime for agents"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []

@@ -1,3 +1,3 @@
-# Lunarr API
+# Agent Runtime
 
-FastAPI backend for Lunarr.
+Runtime for agents.
