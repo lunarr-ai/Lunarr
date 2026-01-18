@@ -22,6 +22,60 @@ services:
           memory: 512M
           cpus: '1'
 
+  microsandbox:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.microsandbox
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      args:
+        - DEBIAN_VERSION=${DEBIAN_VERSION:-13.2-slim}
+        - MICROSANDBOX_VERSION=${MICROSANDBOX_VERSION:-}
+        - MICROSANDBOX_AUTO_PULL_IMAGES=${MICROSANDBOX_AUTO_PULL_IMAGES:-true}
+    ports:
+      - "${MICROSANDBOX_PORT_OVERRIDE:-5555}:${MICROSANDBOX_PORT:-5555}"
+    privileged: true
+    security_opt:
+      - apparmor=unconfined
+      - seccomp=unconfined
+    environment:
+      - TZ=${TZ:-UTC}
+      - MICROSANDBOX_HOME=/root/.microsandbox
+    volumes:
+      - microsandbox_namespaces:/root/.microsandbox/namespaces
+      - microsandbox_workspace:/workspace
+    devices:
+      - /dev/kvm:/dev/kvm
+      - /dev/net/tun:/dev/net/tun
+    command:
+      - /bin/sh
+      - -c
+      - >
+        if [ "${MICROSANDBOX_DEV_MODE:-true}" = "true" ]; then
+          DEV_FLAG="--dev";
+        else
+          DEV_FLAG="";
+        fi;
+        exec server start --host 0.0.0.0 --port ${MICROSANDBOX_PORT:-5555} ${DEV_FLAG};
+    working_dir: /workspace
+    healthcheck:
+      test: ["CMD-SHELL", "msb --version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: ${MICROSANDBOX_CPU_LIMIT:-4}
+          memory: ${MICROSANDBOX_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: ${MICROSANDBOX_CPU_RESERVATION:-1}
+          memory: ${MICROSANDBOX_MEMORY_RESERVATION:-1G}
+
 volumes:
   registry-data:
   embedding-data:
+  microsandbox_namespaces:
+  microsandbox_workspace:
