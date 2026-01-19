@@ -9,6 +9,9 @@ includes:
   agent-broker:
     taskfile: ./agent-broker/Taskfile.yml
     dir: ./agent-broker
+  a2a-sidecar:
+    taskfile: ./a2a-sidecar/Taskfile.yml
+    dir: ./a2a-sidecar
   api:
     taskfile: ./api/Taskfile.yml
     dir: ./api

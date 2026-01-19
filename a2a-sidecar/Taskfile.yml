@@ -1,0 +1,42 @@
+version: '3'
+
+vars:
+  BINARY_NAME: sidecar
+  BINARY_DIR: ./bin
+
+tasks:
+  default:
+    desc: Display available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  build:
+    desc: Build the sidecar binary
+    cmds:
+      - go build -o {{.BINARY_DIR}}/{{.BINARY_NAME}} ./cmd/sidecar
+    sources:
+      - ./**/*.go
+    generates:
+      - '{{.BINARY_DIR}}/{{.BINARY_NAME}}'
+
+  run:
+    desc: Run the sidecar (builds first if needed)
+    deps: [build]
+    cmds:
+      - '{{.BINARY_DIR}}/{{.BINARY_NAME}}'
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf {{.BINARY_DIR}}

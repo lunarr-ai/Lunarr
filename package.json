@@ -37,6 +37,10 @@
     "api/pyproject.toml": [
       "bash -c 'task -d api lock'"
     ],
+    "a2a-sidecar/**/*.go": [
+      "task -d a2a-sidecar fmt --",
+      "task -d a2a-sidecar lint --"
+    ],
     "agent-broker/**/*.go": [
       "task -d agent-broker fmt --",
       "task -d agent-broker lint --"
