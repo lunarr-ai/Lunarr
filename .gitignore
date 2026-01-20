@@ -48,3 +48,6 @@ bin/
 # Local documents
 spec/
 PLAN.md
+
+# Python
+__pycache__/
