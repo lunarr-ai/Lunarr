@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/a2aproject/a2a-go/a2asrv"
 	"github.com/lunarr-ai/lunarr/a2a-sidecar/internal/config"
@@ -40,7 +41,20 @@ func run() error {
 		"max_concurrent", cfg.MaxConcurrent,
 	)
 
-	executor := proxy.NewProxyExecutor()
+	// Create translator based on agent type
+	var translator proxy.Translator
+	switch cfg.AgentType {
+	case "a2a":
+		translator = proxy.NewA2ATranslator(cfg.BackendURL)
+	case "adk":
+		// Future: translator = proxy.NewADKTranslator(cfg.BackendURL)
+		translator = proxy.NewA2ATranslator(cfg.BackendURL)
+	}
+
+	executor := proxy.NewProxyExecutor(translator,
+		proxy.WithTimeout(time.Duration(cfg.TimeoutSeconds)*time.Second),
+		proxy.WithLogger(logger),
+	)
 
 	requestHandler := a2asrv.NewHandler(executor)
 
